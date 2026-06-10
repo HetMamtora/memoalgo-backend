@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: memoalgo_postgres
+    environment:
+      POSTGRES_DB: memoalgo_dev
+      POSTGRES_USER: memoalgo_user
+      POSTGRES_PASSWORD: memoalgo_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memoalgo_user -d memoalgo_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
