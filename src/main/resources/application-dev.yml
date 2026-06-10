@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/memoalgo_dev
-    username: memoalgo_user
-    password: memoalgo_pass
+    username: postgres
+    password: personalProjects1324@
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
@@ -11,12 +11,10 @@ spring:
   jpa:
     show-sql: true
 
-# JWT — dev-only secret (short, human-readable for debugging)
-# Replace with a long random secret in prod
 jwt:
   secret: dev-secret-key-replace-this-in-production-with-256-bit-key
-  expiration-ms: 86400000       # 24 hours
-  refresh-expiration-ms: 604800000  # 7 days
+  expiration-ms: 86400000
+  refresh-expiration-ms: 604800000
 
 logging:
   level:
