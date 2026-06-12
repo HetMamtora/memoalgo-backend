@@ -17,7 +17,7 @@ import java.util.UUID;
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query("""
-            SELECT r from Revieq r
+            SELECT r from Review r
             WHERE r.user = :user
             AND r.nextReviewDate <= :date
             ORDER BY r.nextReviewDate ASC

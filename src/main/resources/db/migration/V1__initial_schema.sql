@@ -14,6 +14,7 @@ CREATE TABLE users (
     is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     last_active_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_users_email    UNIQUE (email),
     CONSTRAINT uq_users_username UNIQUE (username)
@@ -30,6 +31,7 @@ CREATE TABLE topics (
     description     TEXT,
     parent_topic_id UUID         REFERENCES topics(id) ON DELETE SET NULL,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_topics_name UNIQUE (name)
 );
@@ -88,6 +90,7 @@ CREATE TABLE reviews (
     next_review_date  DATE          NOT NULL DEFAULT CURRENT_DATE,
     last_reviewed_at  TIMESTAMPTZ,
     created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_reviews_problem_user UNIQUE (problem_id, user_id),
     CONSTRAINT chk_reviews_ease_factor CHECK (ease_factor >= 1.30),
@@ -111,6 +114,8 @@ CREATE TABLE review_history (
     interval_before     INTEGER       NOT NULL,
     interval_after      INTEGER       NOT NULL,
     reviewed_at         TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    created_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
     CONSTRAINT chk_review_history_quality CHECK (quality BETWEEN 0 AND 5)
 );
@@ -124,6 +129,7 @@ CREATE TABLE tags (
     user_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name       VARCHAR(50)  NOT NULL,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_tags_user_name UNIQUE (user_id, name)
 );
