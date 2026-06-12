@@ -71,11 +71,11 @@ public class Problem extends BaseEntity{
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @OneToMany(mappedBy = "problem")
+    @OneToMany(mappedBy = "problem", targetEntity = Review.class)
     @Builder.Default
     private Set<Review> reviews = new HashSet<>();
 
-    @OneToMany(mappedBy = "problem")
+    @OneToMany(mappedBy = "problem", targetEntity = ProblemTag.class)
     @Builder.Default
     private Set<ProblemTag> problemTags = new HashSet<>();
 

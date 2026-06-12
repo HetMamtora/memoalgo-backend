@@ -56,19 +56,19 @@ public class User extends BaseEntity{
     @Column(name = "last_active_at", nullable = false)
     private Instant lastActiveAt;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", targetEntity = Problem.class)
     @Builder.Default
     private Set<Problem> problems = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", targetEntity = Review.class)
     @Builder.Default
     private Set<Review> reviews = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", targetEntity = Tag.class)
     @Builder.Default
     private Set<Tag> tags = new HashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", targetEntity = ReviewHistory.class)
     @Builder.Default
     private Set<ReviewHistory> reviewHistories = new HashSet<>();
 }

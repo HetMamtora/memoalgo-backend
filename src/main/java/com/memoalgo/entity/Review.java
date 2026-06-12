@@ -89,7 +89,7 @@ public class Review extends BaseEntity {
     @Column(name = "last_reviewed_at")
     private Instant lastReviewedAt;
 
-    @OneToMany(mappedBy = "review")
+    @OneToMany(mappedBy = "review", targetEntity = ReviewHistory.class)
     @Builder.Default
     private Set<ReviewHistory> histories = new HashSet<>();
 }

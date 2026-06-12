@@ -60,11 +60,11 @@ public class Topic extends BaseEntity{
     )
     private Topic parentTopic;
 
-    @OneToMany(mappedBy = "parentTopic")
+    @OneToMany(mappedBy = "parentTopic", targetEntity = Topic.class)
     @Builder.Default
     private Set<Topic> childTopics = new HashSet<>();
 
-    @OneToMany(mappedBy = "topic")
+    @OneToMany(mappedBy = "topic", targetEntity = Problem.class)
     @Builder.Default
     private Set<Problem> problems = new HashSet<>();
 }

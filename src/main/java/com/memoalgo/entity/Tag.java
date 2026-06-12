@@ -58,7 +58,7 @@ public class Tag extends BaseEntity{
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @OneToMany(mappedBy = "tag")
+    @OneToMany(mappedBy = "tag", targetEntity = ProblemTag.class)
     @Builder.Default
     private Set<ProblemTag> problemTags = new HashSet<>();
 }
