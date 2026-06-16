@@ -13,6 +13,7 @@ target/
 .env.local
 .env.production
 application-prod.yml
+application-dev.yml
 
 # ── IDE ───────────────────────────────────────────────────
 .idea/
@@ -32,3 +33,4 @@ logs/
 
 # ── Spring Boot ───────────────────────────────────────────
 spring-shell.log
+src/test/java/resources/application-test.yml
