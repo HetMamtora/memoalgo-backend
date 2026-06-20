@@ -75,7 +75,7 @@ public class ReviewService {
                 .map(review -> {
                     Problem problem = review.getProblem();
                     var tags = Set.copyOf(problemTagRepository.findByProblem(problem));
-                    return ProblemResponse.fromEntity(problem, tags);
+                    return ProblemResponse.fromEntity(problem, tags, review);
                 })
                 .collect(Collectors.toList());
 

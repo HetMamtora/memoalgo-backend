@@ -17,6 +17,10 @@ import java.util.Map;
  * - retentionRate:      % of reviews rated Good (4) or Easy (5)
  * - problemsByDifficulty: {"EASY": 80, "MEDIUM": 120, "HARD": 40}
  * - problemsByTopic:    {"Arrays & Strings": 30, "Trees": 25, ...}
+ * - retentionByTopic:   {"Arrays & Strings": 91.0, "Graphs": 38.0, ...}
+ *                        -- % rated Good/Easy, per topic. Only includes
+ *                        topics with at least 1 review (a 0/0 rate is
+ *                        meaningless, not 0%).
  */
 
 @Getter
@@ -33,4 +37,5 @@ public class StatsResponse {
     private double retentionRate;
     private Map<String, Long> problemsByDifficulty;
     private Map<String, Long> problemsByTopic;
+    private Map<String, Double> retentionByTopic;
 }

@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +34,10 @@ import java.util.stream.Collectors;
  * Retention rate:
  *   (reviews rated 4 or 5) / (total reviews) * 100
  *   Reviews where user recalled correctly without "Again".
+ *   Computed by calculateRetentionRate() -- both the overall rate and the
+ *   per-topic rates (retentionByTopic) call this same helper, so there's
+ *   one definition of "retention" in the whole service, not two that could
+ *   drift apart from each other later.
  */
 @Slf4j
 @Service
@@ -62,10 +67,13 @@ public class StatsService {
         long totalReviews = allHistory.size();
 
         // Retention rate: percentage of Good (4) or Easy (5) ratings
-        double retentionRate = totalReviews == 0 ? 0.0 :
+        /*double retentionRate = totalReviews == 0 ? 0.0 :
                 allHistory.stream()
                         .filter(rh -> rh.getQuality() >= 4)
-                        .count() * 100.0 / totalReviews;
+                        .count() * 100.0 / totalReviews;*/
+
+        // Overall retention rate: percentage of Good (4) or Easy (5) ratings
+        double retentionRate = calculateRetentionRate(allHistory);
 
         // Current streak (consecutive days with reviews)
         int currentStreak = calculateStreak(allHistory);
@@ -87,15 +95,50 @@ public class StatsService {
                                 Collectors.counting()
                         ));
 
+        // Retention rate grouped by topic name (chain: ReviewHistory ->
+        // review -> problem -> topic). Reviews for problems with no topic
+        // assigned are excluded -- there's no topic to attribute them to.
+        // calculateRetentionRate() is the exact same helper used for the
+        // overall rate above, just applied to each topic's slice of
+        // history instead of all of it.
+        Map<String, Double> retentionByTopic = allHistory.stream()
+                .filter(rh -> rh.getReview().getProblem().getTopic() != null)
+                .collect(Collectors.groupingBy(
+                        rh -> rh.getReview().getProblem().getTopic().getName(),
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                this::calculateRetentionRate
+                        )
+                ));
+
         return StatsResponse.builder()
                 .totalProblems(totalProblems)
                 .dueToday(dueToday)
                 .currentStreak(currentStreak)
                 .totalReviews(totalReviews)
-                .retentionRate(Math.round(retentionRate * 10.0) / 10.0)
+                //.retentionRate(Math.round(retentionRate * 10.0) / 10.0)
+                .retentionRate(retentionRate)
                 .problemsByDifficulty(problemsByDifficulty)
                 .problemsByTopic(problemsByTopic)
+                .retentionByTopic(retentionByTopic)
                 .build();
+    }
+
+    /**
+     * Percentage of the given history rated Good (4) or Easy (5), rounded
+     * to 1 decimal place. Returns 0.0 for an empty list rather than
+     * dividing by zero -- used for both the overall retention rate and
+     * each topic's rate in retentionByTopic.
+     */
+    private double calculateRetentionRate(List<ReviewHistory> history) {
+        if(history.isEmpty()) return 0.0;
+
+        long good = history.stream()
+                .filter(rh -> rh.getQuality() >= 4)
+                .count();
+
+        double rate = good * 100.0 / history.size();
+        return Math.round(rate * 10.0) / 10.0;
     }
 
     /**
