@@ -4,15 +4,13 @@ import com.memoalgo.dto.request.ProblemRequest;
 import com.memoalgo.dto.response.ProblemResponse;
 import com.memoalgo.entity.Problem;
 import com.memoalgo.entity.ProblemTag;
+import com.memoalgo.entity.Review;
 import com.memoalgo.entity.ProblemTagId;
 import com.memoalgo.entity.Tag;
 import com.memoalgo.entity.Topic;
 import com.memoalgo.entity.User;
 import com.memoalgo.exception.ResourceNotFoundException;
-import com.memoalgo.repository.ProblemRepository;
-import com.memoalgo.repository.ProblemTagRepository;
-import com.memoalgo.repository.TagRepository;
-import com.memoalgo.repository.TopicRepository;
+import com.memoalgo.repository.*;
 import com.memoalgo.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +40,15 @@ import java.util.stream.Collectors;
  *
  * 4. TOPIC RESOLUTION: if topicId is provided, we validate it exists
  *    before setting it. If null, the problem has no topic (that's fine).
+ *
+ * 5. REVIEW LOOKUP (nextReviewDate on ProblemResponse): a Problem doesn't
+ *    own its scheduling state — Review does, as a separate row that only
+ *    exists once the problem has been reviewed at least once. Wherever we
+ *    return a ProblemResponse for a problem that may already have one, we
+ *    look it up via ReviewRepository and pass it into fromEntity. Same N+1
+ *    pattern as the existing per-problem tag lookup below (one query per
+ *    problem in getAllProblems) — fine at this app's scale; batch both via
+ *    a single findByProblemIn(...)-style query each if that ever changes.
  */
 @Slf4j
 @Service
@@ -52,6 +59,7 @@ public class ProblemService {
     private final TopicRepository topicRepository;
     private final TagRepository tagRepository;
     private final ProblemTagRepository problemTagRepository;
+    private final ReviewRepository reviewRepository;
     private final SecurityUtils securityUtils;
 
     /**
@@ -71,7 +79,8 @@ public class ProblemService {
                         || (p.getTopic() != null && p.getTopic().getId().equals(topicId)))
                 .map(p -> {
                     Set<ProblemTag> tags = Set.copyOf(problemTagRepository.findByProblem(p));
-                    return ProblemResponse.fromEntity(p, tags);
+                    Review review = reviewRepository.findByProblemAndUser(p, currentUser).orElse(null);
+                    return ProblemResponse.fromEntity(p, tags, review);
                 })
                 .collect(Collectors.toList());
     }
@@ -87,7 +96,8 @@ public class ProblemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Problem", "id", problemId));
 
         Set<ProblemTag> tags = Set.copyOf(problemTagRepository.findByProblem(problem));
-        return ProblemResponse.fromEntity(problem, tags);
+        Review review = reviewRepository.findByProblemAndUser(problem, currentUser).orElse(null);
+        return ProblemResponse.fromEntity(problem, tags, review);
     }
 
     /**
@@ -124,7 +134,11 @@ public class ProblemService {
 
         log.info("Problem created: '{}' by user: {}", savedProblem.getTitle(), currentUser.getEmail());
 
-        return ProblemResponse.fromEntity(savedProblem, savedTags);
+        // No Review row can exist yet for a problem that was just created --
+        // that's only ever created by ReviewService on the first review.
+        // Passing null directly here skips a query we already know is moot.
+
+        return ProblemResponse.fromEntity(savedProblem, savedTags, null);
     }
 
     /**
@@ -159,7 +173,11 @@ public class ProblemService {
 
         log.info("Problem updated: '{}' by user: {}", updatedProblem.getTitle(), currentUser.getEmail());
 
-        return ProblemResponse.fromEntity(updatedProblem, updatedTags);
+        // Unlike create, an existing problem may already have been
+        // reviewed at least once -- look it up rather than assume null.
+        Review review = reviewRepository.findByProblemAndUser(updatedProblem, currentUser).orElse(null);
+
+        return ProblemResponse.fromEntity(updatedProblem, updatedTags, review);
     }
 
     /**
