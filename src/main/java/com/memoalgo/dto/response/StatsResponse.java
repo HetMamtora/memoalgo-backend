@@ -21,6 +21,10 @@ import java.util.Map;
  *                        -- % rated Good/Easy, per topic. Only includes
  *                        topics with at least 1 review (a 0/0 rate is
  *                        meaningless, not 0%).
+ * - reviewsByDay:       {"2026-06-20": 5, "2026-06-19": 3, ...}
+ *                        -- review count per day for the last 35 days,
+ *                        only includes days with >= 1 review (missing
+ *                        day = 0 reviews, frontend fills the gaps)
  */
 
 @Getter
@@ -38,4 +42,5 @@ public class StatsResponse {
     private Map<String, Long> problemsByDifficulty;
     private Map<String, Long> problemsByTopic;
     private Map<String, Double> retentionByTopic;
+    private Map<String, Long> reviewsByDay;
 }

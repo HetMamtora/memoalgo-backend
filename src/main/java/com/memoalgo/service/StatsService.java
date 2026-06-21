@@ -17,7 +17,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -111,6 +110,17 @@ public class StatsService {
                         )
                 ));
 
+        LocalDate cutoff = LocalDate.now().minusDays(35);
+        Map<String, Long> reviewsByDay = allHistory.stream()
+                .map(rh -> rh.getReviewedAt()
+                        .atZone(ZoneOffset.UTC)
+                        .toLocalDate())
+                .filter(date -> !date.isBefore(cutoff))
+                .collect(Collectors.groupingBy(
+                        LocalDate::toString,
+                        Collectors.counting()
+                ));
+
         return StatsResponse.builder()
                 .totalProblems(totalProblems)
                 .dueToday(dueToday)
@@ -121,6 +131,7 @@ public class StatsService {
                 .problemsByDifficulty(problemsByDifficulty)
                 .problemsByTopic(problemsByTopic)
                 .retentionByTopic(retentionByTopic)
+                .reviewsByDay(reviewsByDay)
                 .build();
     }
 
