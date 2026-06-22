@@ -28,7 +28,7 @@ app:
   # with something like "MemoAlgo <noreply@yourdomain.com>". Until then
   # this will only deliver to the email tied to your Resend account.
   mail:
-    from: "MemoAlgo <onboarding@resend.dev>"
+    from: "MemoAlgo <noreply@memoalgo.dev>"
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
