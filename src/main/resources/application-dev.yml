@@ -24,6 +24,8 @@ app:
     api-key: re_U876uMFX_McMzJRoZxUp31vxgLZd558PR
   mail:
     from: "MemoAlgo <onboarding@resend.dev>"
+  cors:
+    allowed-origins: http://localhost:5173
 
 logging:
   level:
