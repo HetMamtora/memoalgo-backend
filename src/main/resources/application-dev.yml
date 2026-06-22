@@ -11,10 +11,21 @@ spring:
   jpa:
     show-sql: true
 
+  mail:
+    password: re_U876uMFX_McMzJRoZxUp31vxgLZd558PR
+
 jwt:
   secret: dev-secret-key-replace-this-in-production-with-256-bit-key
   expiration-ms: 86400000
   refresh-expiration-ms: 604800000
+
+# Resend's sandbox sender -- works without a verified domain, but can
+# ONLY deliver to the email address you signed up to Resend with. Once
+# you verify a real domain (Day 13+), update this to e.g.
+# "MemoAlgo <noreply@yourdomain.com>" so it can send to anyone.
+app:
+  mail:
+    from: "MemoAlgo <onboarding@resend.dev>"
 
 logging:
   level:

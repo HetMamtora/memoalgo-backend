@@ -34,3 +34,4 @@ logs/
 # ── Spring Boot ───────────────────────────────────────────
 spring-shell.log
 src/test/java/resources/application-test.yml
+src/main/resources/db/migration/V2__add_otp_tables.sql

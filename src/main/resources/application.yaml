@@ -23,6 +23,21 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: false
 
+  # Resend SMTP relay. Host/port/username are the same in every
+  # environment -- only the password (API key) and the "from" address
+  # differ, so those two live in application-dev.yml / application-prod.yml
+  # instead, alongside jwt.secret which already follows that split.
+  mail:
+    host: smtp.resend.com
+    port: 587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    username: resend
+
 server:
   port: 8080
   error:
@@ -50,3 +65,10 @@ springdoc:
 logging:
   level:
     com.memoalgo: INFO
+
+# OTP settings -- shared across environments, not secret
+app:
+  otp:
+    expiry-minutes: 10
+    max-attempts: 5
+    resend-cooldown-seconds: 45
