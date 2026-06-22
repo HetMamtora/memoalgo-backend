@@ -11,12 +11,23 @@ spring:
   jpa:
     show-sql: false
 
+  mail:
+    password: ${RESEND_API_KEY}
+
 # All secrets injected at runtime from Railway environment variables
 # Set these in Railway dashboard — never hardcode them here
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+# TODO once your domain is verified with Resend (Day 13+): replace with
+# something like "MemoAlgo <noreply@yourdomain.com>". Until then this
+# will fail in production -- the sandbox sender only works for the email
+# tied to your Resend account, not real users.
+app:
+  mail:
+    from: "MemoAlgo <onboarding@resend.dev>"
 
 logging:
   level:
