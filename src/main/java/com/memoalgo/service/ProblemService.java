@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,13 +44,11 @@ import java.util.stream.Collectors;
  *    before setting it. If null, the problem has no topic (that's fine).
  *
  * 5. REVIEW LOOKUP (nextReviewDate on ProblemResponse): a Problem doesn't
- *    own its scheduling state — Review does, as a separate row that only
- *    exists once the problem has been reviewed at least once. Wherever we
- *    return a ProblemResponse for a problem that may already have one, we
- *    look it up via ReviewRepository and pass it into fromEntity. Same N+1
- *    pattern as the existing per-problem tag lookup below (one query per
- *    problem in getAllProblems) — fine at this app's scale; batch both via
- *    a single findByProblemIn(...)-style query each if that ever changes.
+ *    own its scheduling state — Review does, as a separate row. createProblem()
+ *    now creates this row itself (see APP_ZONE comment below for why), so
+ *    every active problem has exactly one Review from the moment it's
+ *    created onward — getAllProblems/getProblemById/updateProblem's lookups
+ *    via ReviewRepository will always find it.
  */
 @Slf4j
 @Service
@@ -61,6 +61,11 @@ public class ProblemService {
     private final ProblemTagRepository problemTagRepository;
     private final ReviewRepository reviewRepository;
     private final SecurityUtils securityUtils;
+
+    // Used for computing next_review_date. Explicit on purpose: LocalDate.now()
+    // with no argument uses the JVM's *default* timezone, which depends on
+    // the host platform/container image, not on anything we control in code.
+    private static final ZoneId APP_ZONE = ZoneId.of("Asia/Kolkata");
 
     /**
      * Get all active problems for the authenticated user.
@@ -107,7 +112,9 @@ public class ProblemService {
      * 1. Resolve topic (optional)
      * 2. Build and save Problem entity
      * 3. Resolve tags (find or create) and link them
-     * 4. Return DTO
+     * 4. Create the initial Review row, so the problem enters the
+     *    spaced-repetition schedule immediately
+     * 5. Return DTO
      */
     @Transactional
     public ProblemResponse createProblem(ProblemRequest request) {
@@ -132,13 +139,24 @@ public class ProblemService {
         // Handle tags
         Set<ProblemTag> savedTags = resolveAndLinkTags(request.getTags(), savedProblem, currentUser);
 
+        // Create the initial Review row. Without this, the problem can
+        // never appear in the due-review queue (that query reads from
+        // `reviews`, not `problems`) -- and since the Review Session UI
+        // only ever surfaces problems that are already in that queue,
+        // there'd be no normal way to submit a first review either.
+        // ease_factor/interval_days/repetition_count use the entity's
+        // own defaults (2.50/1/0); next_review_date is "tomorrow", which
+        // matches interval_days=1 (SM-2's first interval).
+        Review initialReview = Review.builder()
+                .problem(savedProblem)
+                .user(currentUser)
+                .nextReviewDate(LocalDate.now(APP_ZONE).plusDays(1))
+                .build();
+        Review savedReview = reviewRepository.save(initialReview);
+
         log.info("Problem created: '{}' by user: {}", savedProblem.getTitle(), currentUser.getEmail());
 
-        // No Review row can exist yet for a problem that was just created --
-        // that's only ever created by ReviewService on the first review.
-        // Passing null directly here skips a query we already know is moot.
-
-        return ProblemResponse.fromEntity(savedProblem, savedTags, null);
+        return ProblemResponse.fromEntity(savedProblem, savedTags, savedReview);
     }
 
     /**
@@ -173,8 +191,8 @@ public class ProblemService {
 
         log.info("Problem updated: '{}' by user: {}", updatedProblem.getTitle(), currentUser.getEmail());
 
-        // Unlike create, an existing problem may already have been
-        // reviewed at least once -- look it up rather than assume null.
+        // Every active problem has a Review row from the moment it's
+        // created (see createProblem)
         Review review = reviewRepository.findByProblemAndUser(updatedProblem, currentUser).orElse(null);
 
         return ProblemResponse.fromEntity(updatedProblem, updatedTags, review);
