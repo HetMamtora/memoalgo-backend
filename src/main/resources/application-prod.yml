@@ -5,27 +5,24 @@ spring:
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+      maximum-pool-size: 4
+      minimum-idle: 1
 
   jpa:
     show-sql: false
 
-# All secrets injected at runtime from Railway environment variables
-# Set these in Railway dashboard — never hardcode them here
+# All secrets injected at runtime from Railway/Render environment variables
+# Set these in Railway/Render dashboard
 jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
 
-# Resend, called via its HTTPS API now (not SMTP) -- see EmailService.
-# RESEND_API_KEY is the SAME env var you already set in Railway --
-# no dashboard changes needed, only this property path changed.
+# Resend, called via its HTTPS API now (not SMTP)
+# RESEND_API_KEY is the SAME env var
 app:
   resend:
     api-key: ${RESEND_API_KEY}
-  # TODO once your domain is verified with Resend (Day 13+): replace
-  # with something like "MemoAlgo <noreply@yourdomain.com>". Until then
   # this will only deliver to the email tied to your Resend account.
   mail:
     from: "MemoAlgo <noreply@memoalgo.dev>"
