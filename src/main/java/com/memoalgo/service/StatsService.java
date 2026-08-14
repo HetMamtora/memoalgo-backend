@@ -102,6 +102,7 @@ public class StatsService {
         // history instead of all of it.
         Map<String, Double> retentionByTopic = allHistory.stream()
                 .filter(rh -> rh.getReview().getProblem().getTopic() != null)
+                .filter(rh -> rh.getReview().getProblem().getIsActive())
                 .collect(Collectors.groupingBy(
                         rh -> rh.getReview().getProblem().getTopic().getName(),
                         Collectors.collectingAndThen(
