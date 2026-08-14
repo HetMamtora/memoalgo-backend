@@ -17,8 +17,10 @@ import java.util.UUID;
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query("""
-            SELECT r from Review r
+            SELECT r FROM Review r
+            JOIN r.problem p
             WHERE r.user = :user
+            AND p.isActive = true
             AND r.nextReviewDate <= :date
             ORDER BY r.nextReviewDate ASC
             """)
@@ -28,7 +30,9 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query("""
             SELECT COUNT(r) FROM Review r
+            JOIN r.problem p
             WHERE r.user = :user
+            AND p.isActive = true
             AND r.nextReviewDate <= CURRENT_DATE
             """)
     Long countDueReviews(@Param("user") User user);
