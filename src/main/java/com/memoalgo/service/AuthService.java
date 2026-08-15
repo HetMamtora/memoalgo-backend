@@ -10,6 +10,7 @@ import com.memoalgo.entity.PasswordResetOtp;
 import com.memoalgo.entity.PendingRegistration;
 import com.memoalgo.entity.User;
 import com.memoalgo.exception.ConflictException;
+import com.memoalgo.exception.DisposableEmailException;
 import com.memoalgo.exception.OtpException;
 import com.memoalgo.exception.ResourceNotFoundException;
 import com.memoalgo.repository.PasswordResetOtpRepository;
@@ -17,6 +18,7 @@ import com.memoalgo.repository.PendingRegistrationRepository;
 import com.memoalgo.repository.UserRepository;
 import com.memoalgo.security.JwtTokenProvider;
 import com.memoalgo.security.UserDetailsServiceImpl;
+import com.memoalgo.util.DisposableEmailValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +54,7 @@ public class AuthService {
     private final UserDetailsServiceImpl userDetailsService;
     private final OtpService otpService;
     private final EmailService emailService;
+    private final DisposableEmailValidator disposableEmailValidator;
 
     @Value("${app.otp.expiry-minutes}")
     private int otpExpiryMinutes;
@@ -74,6 +77,10 @@ public class AuthService {
     @Transactional
     public OtpResponse initiateRegistration(RegisterRequest request) {
         String email = request.getEmail().toLowerCase().trim();
+
+        if (disposableEmailValidator.isDisposable(email)) {
+            throw new DisposableEmailException("Disposable email addresses are not allowed. Please use a permanent email address.");
+        }
 
         if (userRepository.existsByEmail(email)) {
             throw new ConflictException("An account with this email already exists");
